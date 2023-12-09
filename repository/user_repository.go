@@ -6,14 +6,11 @@ import (
 	"gorm.io/gorm"
 )
 
-type IUserRepository interface {
-	GetUsers() ([]models.User, error)
-}
 type UserRepository struct {
 	DB *gorm.DB
 }
 
-func NewUserRepository(db *gorm.DB) IUserRepository {
+func NewUserRepository(db *gorm.DB) *UserRepository {
 	return &UserRepository{
 		DB: db,
 	}

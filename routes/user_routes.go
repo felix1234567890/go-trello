@@ -1,11 +1,17 @@
 package routes
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"felix1234567890/go-trello/database"
+	"felix1234567890/go-trello/handlers"
+	"felix1234567890/go-trello/repository"
+	"felix1234567890/go-trello/service"
+
+	"github.com/gofiber/fiber/v2"
+)
 
 func SetupUserRoutes(app fiber.Router) {
-	app.Get("/", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{
-			"message": "Hello, World!",
-		})
-	})
+	userRepository := repository.NewUserRepository(database.DB)
+	userService := service.NewUserService(userRepository)
+	userHandler := handlers.NewUserHandler(userService)
+	app.Get("/", userHandler.GetUsers)
 }

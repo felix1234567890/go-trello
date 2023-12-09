@@ -2,19 +2,21 @@ module felix1234567890/go-trello
 
 go 1.19
 
+require gorm.io/gorm v1.25.5
+
 require (
-	github.com/gofiber/fiber/v2 v2.51.0
-	github.com/joho/godotenv v1.5.1
-	gorm.io/driver/mysql v1.5.2
-	gorm.io/gorm v1.25.5
+	github.com/go-faker/faker/v4 v4.2.0 // indirect
+	github.com/go-sql-driver/mysql v1.7.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 )
 
 require (
 	github.com/andybalholm/brotli v1.0.5 // indirect
-	github.com/go-sql-driver/mysql v1.7.0 // indirect
+	github.com/gofiber/fiber/v2 v2.51.0 // indirect
 	github.com/google/uuid v1.4.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
+	github.com/joho/godotenv v1.5.1
 	github.com/klauspost/compress v1.16.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
@@ -24,4 +26,5 @@ require (
 	github.com/valyala/fasthttp v1.50.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	golang.org/x/sys v0.14.0 // indirect
+	gorm.io/driver/mysql v1.5.2
 )

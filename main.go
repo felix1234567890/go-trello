@@ -18,6 +18,7 @@ func main() {
 		log.Fatalf("Error loading .env file: %s", err)
 	}
 	database.ConnectToDB()
+	// utils.FakeUserFactory()
 	port := flag.String("port", defaultPort, "server port")
 	flag.Parse()
 	app := fiber.New()

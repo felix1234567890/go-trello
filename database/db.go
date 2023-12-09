@@ -10,6 +10,8 @@ import (
 	"gorm.io/gorm"
 )
 
+var DB *gorm.DB
+
 func ConnectToDB() {
 	user, password, database := os.Getenv("MYSQL_USER"), os.Getenv("MYSQL_PASSWORD"), os.Getenv("MYSQL_DATABASE")
 	fmt.Println(user, password, database)
@@ -18,10 +20,19 @@ func ConnectToDB() {
 	if err != nil {
 		log.Fatal("Cannot connect to database", err.Error())
 	}
+
+	DB = db
 	err = db.AutoMigrate(&models.User{})
 	if err != nil {
 		log.Fatal("Cannot migrate", err.Error())
 	}
+	connection, err := db.DB()
+	if err != nil {
+		log.Fatal("Cannot get connection", err.Error())
+	}
+	connection.SetMaxIdleConns(5)
+	connection.SetMaxOpenConns(10)
+
 	fmt.Println("Connected to database")
 
 }

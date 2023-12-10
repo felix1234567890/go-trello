@@ -15,4 +15,5 @@ func SetupUserRoutes(app fiber.Router) {
 	userHandler := handlers.NewUserHandler(userService)
 	app.Get("/", userHandler.GetUsers)
 	app.Get("/:id", userHandler.GetUserById)
+	app.Delete("/:id", userHandler.DeleteUser)
 }

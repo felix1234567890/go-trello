@@ -6,10 +6,13 @@ import (
 	"felix1234567890/go-trello/models"
 	"fmt"
 	"math/rand"
+	"os"
+	"time"
 
 	"github.com/go-faker/faker/v4"
 	"github.com/go-playground/validator"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -56,4 +59,18 @@ func HashPassword(password string) (string, error) {
 		return "", err
 	}
 	return string(bytes), err
+}
+
+var secretKey = []byte(os.Getenv("SECRET_KEY"))
+
+func CreateToken(id uint) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"id":  id,
+		"exp": time.Now().Add(time.Hour * 1).Unix(),
+	})
+	tokenString, err := token.SignedString(secretKey)
+	if err != nil {
+		return "", err
+	}
+	return tokenString, nil
 }

@@ -54,15 +54,15 @@ func (r *UserRepository) UpdateUser(id string, req *models.UpdateUserRequest) er
 	return nil
 }
 
-func (r *UserRepository) CreateUser(req *models.User) error {
+func (r *UserRepository) CreateUser(req *models.User) (uint, error) {
 	hashedPassword, err := utils.HashPassword(req.Password)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	req.Password = hashedPassword
 	result := r.DB.Create(&req)
 	if result.Error != nil {
-		return result.Error
+		return 0, result.Error
 	}
-	return nil
+	return req.ID, nil
 }

@@ -124,9 +124,12 @@ func (h *UserHandler) CreateUser(ctx *fiber.Ctx) error {
 
 	}
 	user := req.ToUser()
-	err := h.UserService.CreateUser(user)
+	id, err := h.UserService.CreateUser(user)
 	if err != nil {
 		return utils.HandleErrorResponse(ctx, fiber.StatusInternalServerError, err.Error())
 	}
-	return utils.JsonResponse(ctx, fiber.StatusCreated, "User created successfully")
+	token, err := utils.CreateToken(id)
+	return utils.JsonResponse(ctx, fiber.StatusCreated, fiber.Map{
+		"token": token,
+	})
 }

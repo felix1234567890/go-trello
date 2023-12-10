@@ -41,3 +41,22 @@ func (r *UserRepository) DeleteUser(id string) error {
 	}
 	return nil
 }
+
+func (r *UserRepository) UpdateUser(id string, req *models.UpdateUserRequest) error {
+	result := r.DB.Model(&models.User{}).Where("id = ?", id).Updates(&req)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}
+
+func (r *UserRepository) CreateUser(req *models.CreateUserRequest) error {
+	result := r.DB.Create(&req)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}

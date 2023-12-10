@@ -25,3 +25,9 @@ func (s *UserService) GetUserById(id string) (models.User, error) {
 func (s *UserService) DeleteUser(id string) error {
 	return s.Repo.DeleteUser(id)
 }
+func (s *UserService) UpdateUser(id string, req *models.UpdateUserRequest) error {
+	return s.Repo.UpdateUser(id, req)
+}
+func (s *UserService) CreateUser(req *models.CreateUserRequest) error {
+	return s.Repo.CreateUser(req)
+}

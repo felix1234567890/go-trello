@@ -1,11 +1,14 @@
 package utils
 
 import (
+	"errors"
 	"felix1234567890/go-trello/database"
 	"felix1234567890/go-trello/models"
+	"fmt"
 	"math/rand"
 
 	"github.com/go-faker/faker/v4"
+	"github.com/go-playground/validator"
 )
 
 func FakeUserFactory() {
@@ -21,4 +24,15 @@ func FakeUserFactory() {
 		}
 		database.DB.Create(&user)
 	}
+}
+
+func ValidateRequest(data interface{}) error {
+	validate := validator.New()
+	err := validate.Struct(data)
+	if err != nil {
+		for _, e := range err.(validator.ValidationErrors) {
+			return errors.New(fmt.Sprintf("Field: %s, Error: %s\n", e.Field(), e.Tag()))
+		}
+	}
+	return nil
 }

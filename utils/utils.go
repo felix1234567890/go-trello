@@ -16,6 +16,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+var SECRET_KEY = []byte(os.Getenv("SECRET_KEY"))
+
 func FakeUserFactory() {
 	min := 5
 	max := 10
@@ -66,16 +68,48 @@ func CheckPasswordHash(password, hash string) error {
 	return err
 }
 
-var secretKey = []byte(os.Getenv("SECRET_KEY"))
-
 func CreateToken(id uint) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":  id,
 		"exp": time.Now().Add(time.Hour * 1).Unix(),
 	})
-	tokenString, err := token.SignedString(secretKey)
+	tokenString, err := token.SignedString(SECRET_KEY)
 	if err != nil {
 		return "", err
 	}
 	return tokenString, nil
+}
+
+func IsAuthorized(requestToken string, secret string) (bool, error) {
+	_, err := jwt.Parse(requestToken, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(secret), nil
+	})
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func ExtractIDFromToken(requestToken string, secret string) (string, error) {
+	token, err := jwt.Parse(requestToken, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(secret), nil
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+
+	if !ok && !token.Valid {
+		return "", fmt.Errorf("Invalid Token")
+	}
+
+	return claims["id"].(string), nil
 }

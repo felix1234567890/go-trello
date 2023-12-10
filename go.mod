@@ -22,6 +22,7 @@ require (
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/gofiber/fiber/v2 v2.51.0 // indirect
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/uuid v1.4.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
@@ -34,6 +35,7 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.50.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
+	github.com/wpcodevo/golang-fiber-jwt v0.0.0-20231003080532-6737e11749bb
 	golang.org/x/sys v0.15.0 // indirect
 	gorm.io/driver/mysql v1.5.2
 )

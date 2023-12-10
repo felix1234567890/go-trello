@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-faker/faker/v4"
 	"github.com/go-playground/validator"
+	"github.com/gofiber/fiber/v2"
 )
 
 func FakeUserFactory() {
@@ -26,13 +27,24 @@ func FakeUserFactory() {
 	}
 }
 
-func ValidateRequest(data interface{}) error {
+func ValidateRequest(data interface{}) []error {
 	validate := validator.New()
 	err := validate.Struct(data)
 	if err != nil {
+		var validationErrors []error
 		for _, e := range err.(validator.ValidationErrors) {
-			return errors.New(fmt.Sprintf("Field: %s, Error: %s\n", e.Field(), e.Tag()))
+			errMsg := fmt.Sprintf("'%s' has a value of '%v' which does not satisfy '%s' constraint", e.Field(), e.Value(), e.Tag())
+			validationErrors = append(validationErrors, errors.New(errMsg))
 		}
+		return validationErrors
 	}
 	return nil
+}
+
+func HandleErrorResponse(c *fiber.Ctx, status int, message string) error {
+	return c.Status(status).JSON(fiber.Map{"message": message})
+}
+
+func JsonResponse(c *fiber.Ctx, status int, data interface{}) error {
+	return c.Status(status).JSON(data)
 }

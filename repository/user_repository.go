@@ -53,7 +53,7 @@ func (r *UserRepository) UpdateUser(id string, req *models.UpdateUserRequest) er
 	return nil
 }
 
-func (r *UserRepository) CreateUser(req *models.CreateUserRequest) error {
+func (r *UserRepository) CreateUser(req *models.User) error {
 	result := r.DB.Create(&req)
 	if result.Error != nil {
 		return result.Error

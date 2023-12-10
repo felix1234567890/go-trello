@@ -76,9 +76,16 @@ func (h *UserHandler) UpdateUser(ctx *fiber.Ctx) error {
 			"message": "Invalid request body",
 		})
 	}
-	if err := utils.ValidateRequest(req); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-			"message": err.Error(),
+
+	validationErrors := utils.ValidateRequest(req)
+	if len(validationErrors) > 0 {
+		// Return validation errors as a bad request
+		errorMessages := make([]string, len(validationErrors))
+		for i, validationErr := range validationErrors {
+			errorMessages[i] = validationErr.Error()
+		}
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"errors": errorMessages,
 		})
 	}
 	err := h.UserService.UpdateUser(id, req)
@@ -95,4 +102,31 @@ func (h *UserHandler) UpdateUser(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(&fiber.Map{
 		"message": "User updated successfully",
 	})
+}
+
+func (h *UserHandler) CreateUser(ctx *fiber.Ctx) error {
+	var req *models.CreateUserRequest
+	if err := ctx.BodyParser(&req); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid request body",
+		})
+	}
+	validationErrors := utils.ValidateRequest(req)
+
+	if len(validationErrors) > 0 {
+		errorMessages := make([]string, len(validationErrors))
+		for i, validationErr := range validationErrors {
+			errorMessages[i] = validationErr.Error()
+		}
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"errors": errorMessages,
+		})
+
+	}
+	user := req.ToUser()
+	err := h.UserService.CreateUser(user)
+	if err != nil {
+		return utils.HandleErrorResponse(ctx, fiber.StatusInternalServerError, err.Error())
+	}
+	return utils.JsonResponse(ctx, fiber.StatusCreated, "User created successfully")
 }

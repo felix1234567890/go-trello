@@ -10,13 +10,17 @@ type User struct {
 }
 
 type CreateUserRequest struct {
-	Username string `json:"username" validate:"required, min=5"`
-	Email    string `json:"email" validate:"required, email"`
-	Password string `json:"password" validate:"required, min=6, oneof=uppercase&lowercase&numeric"`
+	Username string `json:"username" validate:"required,min=5"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=6"`
 }
 
 type UpdateUserRequest struct {
 	Username string `json:"username" validate:"omitempty,min=5"`
 	Email    string `json:"email" validate:"omitempty,email"`
 	Password string `json:"password" validate:"omitempty,min=6"`
+}
+
+func (createDto *CreateUserRequest) ToUser() *User {
+	return &User{Username: createDto.Username, Email: createDto.Email, Password: createDto.Password}
 }

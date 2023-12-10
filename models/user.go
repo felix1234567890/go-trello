@@ -21,6 +21,11 @@ type UpdateUserRequest struct {
 	Password string `json:"password" validate:"omitempty,min=6"`
 }
 
+type LoginUserRequest struct {
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=6"`
+}
+
 func (createDto *CreateUserRequest) ToUser() *User {
 	return &User{Username: createDto.Username, Email: createDto.Email, Password: createDto.Password}
 }

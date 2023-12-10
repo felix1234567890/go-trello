@@ -61,6 +61,11 @@ func HashPassword(password string) (string, error) {
 	return string(bytes), err
 }
 
+func CheckPasswordHash(password, hash string) error {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err
+}
+
 var secretKey = []byte(os.Getenv("SECRET_KEY"))
 
 func CreateToken(id uint) (string, error) {

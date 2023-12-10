@@ -133,3 +133,30 @@ func (h *UserHandler) CreateUser(ctx *fiber.Ctx) error {
 		"token": token,
 	})
 }
+
+func (h *UserHandler) Login(ctx *fiber.Ctx) error {
+	var req *models.LoginUserRequest
+	if err := ctx.BodyParser(&req); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid request body",
+		})
+	}
+	validationErrors := utils.ValidateRequest(req)
+	if len(validationErrors) > 0 {
+		errorMessages := make([]string, len(validationErrors))
+		for i, validationErr := range validationErrors {
+			errorMessages[i] = validationErr.Error()
+		}
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"errors": errorMessages,
+		})
+	}
+	id, err := h.UserService.Login(req)
+	if err != nil {
+		return utils.HandleErrorResponse(ctx, fiber.StatusInternalServerError, err.Error())
+	}
+	token, err := utils.CreateToken(id)
+	return utils.JsonResponse(ctx, fiber.StatusCreated, fiber.Map{
+		"token": token,
+	})
+}

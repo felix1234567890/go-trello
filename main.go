@@ -7,6 +7,7 @@ import (
 	"log"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/joho/godotenv"
 )
 
@@ -22,6 +23,7 @@ func main() {
 	port := flag.String("port", defaultPort, "server port")
 	flag.Parse()
 	app := fiber.New()
+	app.Use(logger.New())
 	globalPrefix := app.Group("/api")
 	userRoutes := globalPrefix.Group("/users")
 	routes.SetupUserRoutes(userRoutes)

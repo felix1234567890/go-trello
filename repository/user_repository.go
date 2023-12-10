@@ -66,3 +66,16 @@ func (r *UserRepository) CreateUser(req *models.User) (uint, error) {
 	}
 	return req.ID, nil
 }
+
+func (r *UserRepository) Login(LoginUserRequest *models.LoginUserRequest) (uint, error) {
+
+	var user models.User
+	result := r.DB.Where("email = ?", LoginUserRequest.Email).First(&user)
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	if err := utils.CheckPasswordHash(LoginUserRequest.Password, user.Password); err != nil {
+		return 0, err
+	}
+	return user.ID, nil
+}

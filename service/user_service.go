@@ -31,3 +31,7 @@ func (s *UserService) UpdateUser(id string, req *models.UpdateUserRequest) error
 func (s *UserService) CreateUser(req *models.User) (uint, error) {
 	return s.Repo.CreateUser(req)
 }
+
+func (s *UserService) Login(LoginUserRequest *models.LoginUserRequest) (uint, error) {
+	return s.Repo.Login(LoginUserRequest)
+}

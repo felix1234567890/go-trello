@@ -10,6 +10,7 @@ import (
 	"github.com/go-faker/faker/v4"
 	"github.com/go-playground/validator"
 	"github.com/gofiber/fiber/v2"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func FakeUserFactory() {
@@ -47,4 +48,12 @@ func HandleErrorResponse(c *fiber.Ctx, status int, message string) error {
 
 func JsonResponse(c *fiber.Ctx, status int, data interface{}) error {
 	return c.Status(status).JSON(data)
+}
+
+func HashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(bytes), err
 }

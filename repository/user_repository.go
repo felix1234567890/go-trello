@@ -2,6 +2,7 @@ package repository
 
 import (
 	"felix1234567890/go-trello/models"
+	"felix1234567890/go-trello/utils"
 
 	"gorm.io/gorm"
 )
@@ -54,6 +55,11 @@ func (r *UserRepository) UpdateUser(id string, req *models.UpdateUserRequest) er
 }
 
 func (r *UserRepository) CreateUser(req *models.User) error {
+	hashedPassword, err := utils.HashPassword(req.Password)
+	if err != nil {
+		return err
+	}
+	req.Password = hashedPassword
 	result := r.DB.Create(&req)
 	if result.Error != nil {
 		return result.Error

@@ -1,7 +1,9 @@
 package repository
 
 import (
+	"errors"
 	"felix1234567890/go-trello/models"
+	"fmt"
 
 	"gorm.io/gorm"
 )
@@ -21,4 +23,14 @@ func (r *UserRepository) GetUsers() ([]models.User, error) {
 		return nil, err
 	}
 	return users, nil
+}
+
+func (r *UserRepository) GetUserById(id string) (models.User, error) {
+	var user models.User
+	err := r.DB.First(&user, id).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return models.User{}, fmt.Errorf("user with id %s not found", id)
+	}
+
+	return user, nil
 }

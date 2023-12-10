@@ -27,3 +27,16 @@ func (h *UserHandler) GetUsers(c *fiber.Ctx) error {
 		"users": users,
 	})
 }
+
+func (h *UserHandler) GetUserById(c *fiber.Ctx) error {
+	id := c.Params("id")
+	user, err := h.UserService.GetUserById(id)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(&fiber.Map{
+			"message": err.Error(),
+		})
+	}
+	return c.Status(fiber.StatusOK).JSON(&fiber.Map{
+		"user": user,
+	})
+}

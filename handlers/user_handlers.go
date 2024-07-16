@@ -11,10 +11,10 @@ import (
 )
 
 type UserHandler struct {
-	UserService *service.UserService
+	UserService service.UserService
 }
 
-func NewUserHandler(userService *service.UserService) *UserHandler {
+func NewUserHandler(userService service.UserService) *UserHandler {
 	return &UserHandler{
 		UserService: userService,
 	}
@@ -151,7 +151,7 @@ func (h *UserHandler) Login(ctx *fiber.Ctx) error {
 			"errors": errorMessages,
 		})
 	}
-	id, err := h.UserService.Login(req)
+	id, err := h.UserService.LoginUser(req)
 	if err != nil {
 		return utils.HandleErrorResponse(ctx, fiber.StatusInternalServerError, err.Error())
 	}

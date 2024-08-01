@@ -15,13 +15,12 @@ func SetupUserRoutes(app fiber.Router) {
 	userService := service.NewUserService(userRepository)
 	userHandler := handlers.NewUserHandler(userService)
 
-	userRoutes := app.Group("/users")
-	userRoutes.Get("/", userHandler.GetUsers)
-	userRoutes.Get("/me", middlewares.DeserializeUser, userHandler.GetMe)
-	userRoutes.Get("/:id", userHandler.GetUserById)
-	userRoutes.Delete("/:id", userHandler.DeleteUser)
-	userRoutes.Put("/:id", userHandler.UpdateUser)
-	userRoutes.Post("/", userHandler.CreateUser)
-	userRoutes.Post("/login", userHandler.Login)
+	app.Get("/", userHandler.GetUsers)
+	app.Get("/me", middlewares.DeserializeUser, userHandler.GetMe)
+	app.Get("/:id", userHandler.GetUserById)
+	app.Delete("/:id", userHandler.DeleteUser)
+	app.Put("/:id", userHandler.UpdateUser)
+	app.Post("/", userHandler.CreateUser)
+	app.Post("/login", userHandler.Login)
 
 }

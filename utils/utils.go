@@ -1,10 +1,11 @@
+// Package utils provides helper functions for various tasks within the application,
+// such as request validation, password hashing, JWT creation, and standardized JSON responses.
 package utils
 
 import (
-	"errors"
-	"felix1234567890/go-trello/database"
 	"felix1234567890/go-trello/models"
 	"fmt"
+	"log"
 	"math/rand"
 	"os"
 	"time"
@@ -14,11 +15,25 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 var SECRET_KEY = []byte(os.Getenv("SECRET_KEY"))
 
-func FakeUserFactory() {
+// init checks for the presence of the SECRET_KEY environment variable at application startup.
+// It terminates the application with log.Fatalf if the SECRET_KEY is not set,
+// ensuring the application does not run with a critical security configuration missing.
+func init() {
+	if os.Getenv("SECRET_KEY") == "" {
+		log.Fatalf("FATAL: SECRET_KEY environment variable is not set.")
+	}
+}
+
+// FakeUserFactory creates a random number of fake users (between 5 and 10)
+// and persists them to the database using the provided *gorm.DB connection.
+// Usernames, emails, and passwords (unhashed) are generated using a faker library.
+// Returns an error if any database operation fails.
+func FakeUserFactory(db *gorm.DB) error {
 	min := 5
 	max := 10
 	randomValue := rand.Intn(max-min) + min
@@ -27,34 +42,47 @@ func FakeUserFactory() {
 		user := models.User{
 			Username: faker.Username(),
 			Email:    faker.Email(),
-			Password: faker.Password(),
+			Password: faker.Password(), // Note: This password is not hashed by default.
 		}
-		database.DB.Create(&user)
+		result := db.Create(&user)
+		if result.Error != nil {
+			return fmt.Errorf("failed to create fake user %d: %w", i, result.Error)
+		}
 	}
+	return nil
 }
 
-func ValidateRequest(data interface{}) []error {
+// ValidateRequest performs struct validation using "github.com/go-playground/validator".
+// It takes any interface{} as input, which should be a pointer to a struct with validation tags.
+// If validation errors occur, it returns a map[string]string where keys are field names
+// and values are error messages.
+// Returns nil if validation passes.
+func ValidateRequest(data interface{}) map[string]string {
 	validate := validator.New()
 	err := validate.Struct(data)
 	if err != nil {
-		var validationErrors []error
+		validationErrors := make(map[string]string)
 		for _, e := range err.(validator.ValidationErrors) {
-			errMsg := fmt.Sprintf("'%s' has a value of '%v' which does not satisfy '%s' constraint", e.Field(), e.Value(), e.Tag())
-			validationErrors = append(validationErrors, errors.New(errMsg))
+			validationErrors[e.Field()] = fmt.Sprintf("Field %s failed on the '%s' tag", e.Field(), e.Tag())
 		}
 		return validationErrors
 	}
 	return nil
 }
 
+// HandleErrorResponse sends a standardized JSON error response with a given status code and message.
+// The JSON response format is `{"message": "error message"}`.
 func HandleErrorResponse(c *fiber.Ctx, status int, message string) error {
 	return c.Status(status).JSON(fiber.Map{"message": message})
 }
 
+// JsonResponse sends a standardized JSON success response with a given status code and data.
 func JsonResponse(c *fiber.Ctx, status int, data interface{}) error {
 	return c.Status(status).JSON(data)
 }
 
+// HashPassword generates a bcrypt hash for the given password string.
+// Returns the hashed password string and an error if hashing fails.
 func HashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
@@ -63,53 +91,25 @@ func HashPassword(password string) (string, error) {
 	return string(bytes), err
 }
 
+// CheckPasswordHash compares a plain text password with a bcrypt hashed password.
+// Returns nil if the password matches the hash, otherwise returns an error.
 func CheckPasswordHash(password, hash string) error {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err
 }
 
+// CreateToken generates a new JWT token for a given user ID.
+// The token is signed using HS256 and includes the user ID and an expiration time of 1 hour.
+// SECRET_KEY (a package-level variable initialized from env) is used for signing.
+// Returns the signed token string and an error if token generation or signing fails.
 func CreateToken(id uint) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":  id,
-		"exp": time.Now().Add(time.Hour * 1).Unix(),
+		"exp": time.Now().Add(time.Hour * 1).Unix(), // Token expires in 1 hour
 	})
 	tokenString, err := token.SignedString(SECRET_KEY)
 	if err != nil {
 		return "", err
 	}
 	return tokenString, nil
-}
-
-func IsAuthorized(requestToken string, secret string) (bool, error) {
-	_, err := jwt.Parse(requestToken, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
-		}
-		return []byte(secret), nil
-	})
-	if err != nil {
-		return false, err
-	}
-	return true, nil
-}
-
-func ExtractIDFromToken(requestToken string, secret string) (string, error) {
-	token, err := jwt.Parse(requestToken, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
-		}
-		return []byte(secret), nil
-	})
-
-	if err != nil {
-		return "", err
-	}
-
-	claims, ok := token.Claims.(jwt.MapClaims)
-
-	if !ok && !token.Valid {
-		return "", fmt.Errorf("Invalid Token")
-	}
-
-	return claims["id"].(string), nil
 }

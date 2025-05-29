@@ -1,6 +1,7 @@
 package main
 
 import (
+	"felix1234567890/go-trello/database"
 	"felix1234567890/go-trello/routes"
 	"flag"
 	"log"
@@ -31,8 +32,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error loading .env file: %s", err)
 	}
-	// database.ConnectToDB()
-	// utils.FakeUserFactory()
+	db, err := database.ConnectToDB()
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
 	port := flag.String("port", defaultPort, "server port")
 	flag.Parse()
 	app := fiber.New()
@@ -41,6 +44,6 @@ func main() {
 	app.Get("/swagger/*", swagger.HandlerDefault)
 	globalPrefix := app.Group("/api")
 	userRoutes := globalPrefix.Group("/users")
-	routes.SetupUserRoutes(userRoutes)
+	routes.SetupUserRoutes(userRoutes, db)
 	log.Fatal(app.Listen(":" + *port))
 }

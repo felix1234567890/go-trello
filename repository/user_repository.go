@@ -99,10 +99,13 @@ func (r *userRepositoryImpl) LoginUser(loginUserRequest *models.LoginUserRequest
 	var user models.User
 	result := r.DB.Where("email = ?", loginUserRequest.Email).First(&user)
 	if result.Error != nil {
-		return 0, result.Error // Could be gorm.ErrRecordNotFound if email not found
+		if result.Error == gorm.ErrRecordNotFound {
+			return 0, utils.ErrInvalidCredentials // Don't leak whether email exists
+		}
+		return 0, result.Error
 	}
 	if err := utils.CheckPasswordHash(loginUserRequest.Password, user.Password); err != nil {
-		return 0, err // Password mismatch
+		return 0, utils.ErrInvalidCredentials // Password mismatch
 	}
 	return user.ID, nil
 }

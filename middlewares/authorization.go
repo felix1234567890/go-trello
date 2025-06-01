@@ -53,15 +53,8 @@ func DeserializeUser(db *gorm.DB) fiber.Handler {
 		if user.ID == 0 { // Check if user was not found
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"status": "fail", "message": "the user belonging to this token no longer exists"})
 		}
-		// It's better to check if user.ID is 0 (or whatever the zero value for your ID is)
-		// instead of comparing with claims["id"] again, as GORM wouldn't populate user.ID if not found.
-		// However, the original logic was `user.ID != uint(claims["id"].(float64))`.
-		// If `claims["id"]` is guaranteed to be a float64 that can be converted to uint, this might be okay.
-		// For robustness, checking if user was found (e.g. user.ID != 0) is often preferred after a First() call.
-		// I will keep the original comparison logic for now but add a comment.
-		if user.ID != uint(claims["id"].(float64)) { // Original logic
-			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"status": "fail", "message": "the user belonging to this token no longer exists"})
-		}
+		// If GORM found the user by the ID from claims, they match by definition.
+		// No need for redundant comparison with unsafe type assertion.
 
 
 		c.Locals("user", user)

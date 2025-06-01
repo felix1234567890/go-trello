@@ -115,20 +115,13 @@ func (h *UserHandler) UpdateUser(ctx *fiber.Ctx) error {
 		return utils.JsonResponse(ctx, fiber.StatusBadRequest, fiber.Map{"errors": validationErrorsMap})
 	}
 
-	err := h.UserService.UpdateUser(id, req) // Assuming UpdateUser returns the updated user or specific errors
+	err := h.UserService.UpdateUser(id, req)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return utils.HandleErrorResponse(ctx, fiber.StatusNotFound, "User with id "+id+" not found for update")
 		}
-		// Consider if UpdateUser can return other specific errors, e.g., validation from service layer
-		return utils.HandleErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to update user") // Generic message
+		return utils.HandleErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to update user")
 	}
-	// Assuming UpdateUser is successful, and we want to return the updated user model or a success message
-	// For now, sticking to the original plan of returning a message.
-	// If you want to return the user:
-	// updatedUser, err := h.UserService.GetUserById(id) // You might need to fetch it again if UpdateUser doesn't return it
-	// if err != nil { ... handle this ... }
-	// return utils.JsonResponse(ctx, fiber.StatusOK, fiber.Map{"user": updatedUser})
 	return utils.JsonResponse(ctx, fiber.StatusOK, fiber.Map{"message": "User updated successfully"})
 }
 
@@ -193,9 +186,8 @@ func (h *UserHandler) Login(ctx *fiber.Ctx) error {
 
 	userId, err := h.UserService.LoginUser(req) // Renamed id to userId
 	if err != nil {
-		// LoginUser might return specific errors like "invalid credentials"
-		// For now, using a generic message or err.Error() if it's safe
-		if errors.Is(err, gorm.ErrRecordNotFound) || err.Error() == "invalid credentials" { // Example check
+		// Use custom error types for better error handling
+		if errors.Is(err, utils.ErrInvalidCredentials) {
 			return utils.HandleErrorResponse(ctx, fiber.StatusUnauthorized, "Invalid username or password")
 		}
 		return utils.HandleErrorResponse(ctx, fiber.StatusInternalServerError, "Login failed") // Generic message

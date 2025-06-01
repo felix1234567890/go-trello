@@ -3,6 +3,7 @@
 package utils
 
 import (
+	"errors"
 	"felix1234567890/go-trello/models"
 	"fmt"
 	"log"
@@ -19,6 +20,13 @@ import (
 )
 
 var SECRET_KEY = []byte(os.Getenv("SECRET_KEY"))
+
+// Custom error types for better error handling
+var (
+	ErrInvalidCredentials = errors.New("invalid credentials")
+	ErrUserNotFound      = errors.New("user not found")
+	ErrUserAlreadyExists = errors.New("user already exists")
+)
 
 // init checks for the presence of the SECRET_KEY environment variable at application startup.
 // It terminates the application with log.Fatalf if the SECRET_KEY is not set,
@@ -39,10 +47,15 @@ func FakeUserFactory(db *gorm.DB) error {
 	randomValue := rand.Intn(max-min) + min
 
 	for i := 0; i < randomValue; i++ {
+		plainPassword := faker.Password()
+		hashedPassword, err := HashPassword(plainPassword)
+		if err != nil {
+			return fmt.Errorf("failed to hash password for fake user %d: %w", i, err)
+		}
 		user := models.User{
 			Username: faker.Username(),
 			Email:    faker.Email(),
-			Password: faker.Password(), // Note: This password is not hashed by default.
+			Password: hashedPassword, // Password is now properly hashed
 		}
 		result := db.Create(&user)
 		if result.Error != nil {
@@ -58,6 +71,9 @@ func FakeUserFactory(db *gorm.DB) error {
 // and values are error messages.
 // Returns nil if validation passes.
 func ValidateRequest(data interface{}) map[string]string {
+	if data == nil {
+		return map[string]string{"request": "Request data cannot be nil"}
+	}
 	validate := validator.New()
 	err := validate.Struct(data)
 	if err != nil {

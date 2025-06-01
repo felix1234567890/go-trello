@@ -30,19 +30,15 @@ func NewUserHandler(userService service.UserService) *UserHandler {
 //	@Tags			users
 //	@Accept			json
 //	@Produce		json
-//	@Success		200	{array}		models.User	"List of users"
-//	@Failure		500	{object}	fiber.Map	"Internal Server Error"
+//	@Success		200	{object}	fiber.Map	"List of users (e.g., {\"users\": [{\"id\": 1, ...}]})"
+//	@Failure		500	{object}	fiber.Map	"Internal Server Error (e.g., {\"message\": \"Failed to retrieve users\"})"
 //	@Router			/users [get]
 func (h *UserHandler) GetUsers(c *fiber.Ctx) error {
 	users, err := h.UserService.GetUsers()
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(&fiber.Map{
-			"message": err.Error(),
-		})
+		return utils.HandleErrorResponse(c, fiber.StatusInternalServerError, "Failed to retrieve users") // Generic message
 	}
-	return c.Status(fiber.StatusOK).JSON(&fiber.Map{
-		"users": users,
-	})
+	return utils.JsonResponse(c, fiber.StatusOK, fiber.Map{"users": users})
 }
 
 // GetUserById godoc
@@ -53,27 +49,20 @@ func (h *UserHandler) GetUsers(c *fiber.Ctx) error {
 //	@Accept			json
 //	@Produce		json
 //	@Param			id	path		string		true	"User ID"
-//	@Success		200	{object}	models.User	"User details"
-//	@Failure		404	{object}	fiber.Map	"User not found"
-//	@Failure		500	{object}	fiber.Map	"Internal Server Error"
+//	@Success		200	{object}	fiber.Map	"User details (e.g., {\"user\": {\"id\": 1, ...}})"
+//	@Failure		404	{object}	fiber.Map	"User not found (e.g., {\"message\": \"User with id X not found\"})"
+//	@Failure		500	{object}	fiber.Map	"Internal Server Error (e.g., {\"message\": \"Failed to retrieve user\"})"
 //	@Router			/users/{id} [get]
 func (h *UserHandler) GetUserById(c *fiber.Ctx) error {
 	id := c.Params("id")
 	user, err := h.UserService.GetUserById(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return c.Status(fiber.StatusNotFound).JSON(&fiber.Map{
-				"message": "User with an id " + id + " was not found",
-			})
+			return utils.HandleErrorResponse(c, fiber.StatusNotFound, "User with id "+id+" not found")
 		}
-
-		return c.Status(fiber.StatusInternalServerError).JSON(&fiber.Map{
-			"message": err.Error(),
-		})
+		return utils.HandleErrorResponse(c, fiber.StatusInternalServerError, "Failed to retrieve user") // Generic message
 	}
-	return c.Status(fiber.StatusOK).JSON(&fiber.Map{
-		"user": user,
-	})
+	return utils.JsonResponse(c, fiber.StatusOK, fiber.Map{"user": user})
 }
 
 // DeleteUser godoc
@@ -84,26 +73,20 @@ func (h *UserHandler) GetUserById(c *fiber.Ctx) error {
 //	@Accept			json
 //	@Produce		json
 //	@Param			id	path		string		true	"User ID"
-//	@Success		200	{object}	fiber.Map	"User deleted successfully"
-//	@Failure		404	{object}	fiber.Map	"User not found"
-//	@Failure		500	{object}	fiber.Map	"Internal Server Error"
+//	@Success		200	{object}	fiber.Map	"User deleted successfully (e.g., {\"message\": \"User deleted successfully\"})"
+//	@Failure		404	{object}	fiber.Map	"User not found (e.g., {\"message\": \"User with id X not found\"})"
+//	@Failure		500	{object}	fiber.Map	"Internal Server Error (e.g., {\"message\": \"Failed to delete user\"})"
 //	@Router			/users/{id} [delete]
 func (h *UserHandler) DeleteUser(c *fiber.Ctx) error {
 	id := c.Params("id")
 	err := h.UserService.DeleteUser(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return c.Status(fiber.StatusNotFound).JSON(&fiber.Map{
-				"message": "User with an id " + id + " was not found",
-			})
+			return utils.HandleErrorResponse(c, fiber.StatusNotFound, "User with id "+id+" not found")
 		}
-		return c.Status(fiber.StatusInternalServerError).JSON(&fiber.Map{
-			"message": err.Error(),
-		})
+		return utils.HandleErrorResponse(c, fiber.StatusInternalServerError, "Failed to delete user") // Generic message
 	}
-	return c.Status(fiber.StatusOK).JSON(&fiber.Map{
-		"message": "User deleted successfully",
-	})
+	return utils.JsonResponse(c, fiber.StatusOK, fiber.Map{"message": "User deleted successfully"})
 }
 
 // UpdateUser godoc
@@ -115,44 +98,31 @@ func (h *UserHandler) DeleteUser(c *fiber.Ctx) error {
 //	@Produce		json
 //	@Param			id		path		string						true	"User ID"
 //	@Param			user	body		models.UpdateUserRequest	true	"User details to update"
-//	@Success		200		{object}	fiber.Map					"User updated successfully"
-//	@Failure		400		{object}	fiber.Map					"Invalid request body or validation errors"
-//	@Failure		404		{object}	fiber.Map					"User not found"
-//	@Failure		500		{object}	fiber.Map					"Internal Server Error"
+//	@Success		200		{object}	fiber.Map					"User updated successfully (e.g., {\"message\": \"User updated successfully\"})"
+//	@Failure		400		{object}	fiber.Map					"Invalid request body (e.g., {\"message\": \"Invalid request body\"}) or validation errors (e.g., {\"errors\": {\"field\": \"error message\"}})"
+//	@Failure		404		{object}	fiber.Map					"User not found (e.g., {\"message\": \"User with id X not found for update\"})"
+//	@Failure		500		{object}	fiber.Map					"Internal Server Error (e.g., {\"message\": \"Failed to update user\"})"
 //	@Router			/users/{id} [put]
 func (h *UserHandler) UpdateUser(ctx *fiber.Ctx) error {
 	var req *models.UpdateUserRequest
 	id := ctx.Params("id")
 	if err := ctx.BodyParser(&req); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Invalid request body",
-		})
+		return utils.HandleErrorResponse(ctx, fiber.StatusBadRequest, "Invalid request body")
 	}
 
-	validationErrors := utils.ValidateRequest(req)
-	if len(validationErrors) > 0 {
-		errorMessages := make([]string, len(validationErrors))
-		for i, validationErr := range validationErrors {
-			errorMessages[i] = validationErr.Error()
-		}
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"errors": errorMessages,
-		})
+	validationErrorsMap := utils.ValidateRequest(req)
+	if validationErrorsMap != nil {
+		return utils.JsonResponse(ctx, fiber.StatusBadRequest, fiber.Map{"errors": validationErrorsMap})
 	}
+
 	err := h.UserService.UpdateUser(id, req)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return ctx.Status(fiber.StatusNotFound).JSON(&fiber.Map{
-				"message": "User with an id " + id + " could not be updated",
-			})
+			return utils.HandleErrorResponse(ctx, fiber.StatusNotFound, "User with id "+id+" not found for update")
 		}
-		return ctx.Status(fiber.StatusInternalServerError).JSON(&fiber.Map{
-			"message": err.Error(),
-		})
+		return utils.HandleErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to update user")
 	}
-	return ctx.Status(fiber.StatusOK).JSON(&fiber.Map{
-		"message": "User updated successfully",
-	})
+	return utils.JsonResponse(ctx, fiber.StatusOK, fiber.Map{"message": "User updated successfully"})
 }
 
 // CreateUser godoc
@@ -163,38 +133,32 @@ func (h *UserHandler) UpdateUser(ctx *fiber.Ctx) error {
 //	@Accept			json
 //	@Produce		json
 //	@Param			user	body		models.CreateUserRequest	true	"User details"
-//	@Success		201		{object}	fiber.Map					"User created successfully, token returned"
-//	@Failure		400		{object}	fiber.Map					"Invalid request body or validation errors"
-//	@Failure		500		{object}	fiber.Map					"Internal Server Error"
+//	@Success		201		{object}	fiber.Map					"User created successfully, token returned (e.g., {\"token\": \"jwt_token_here\"})"
+//	@Failure		400		{object}	fiber.Map					"Invalid request body (e.g., {\"message\": \"Invalid request body\"}) or validation errors (e.g., {\"errors\": {\"field\": \"error message\"}})"
+//	@Failure		500		{object}	fiber.Map					"Internal Server Error (e.g., {\"message\": \"Failed to create user\"} or {\"message\": \"Failed to create token\"})"
 //	@Router			/users [post]
 func (h *UserHandler) CreateUser(ctx *fiber.Ctx) error {
 	var req *models.CreateUserRequest
 	if err := ctx.BodyParser(&req); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Invalid request body",
-		})
+		return utils.HandleErrorResponse(ctx, fiber.StatusBadRequest, "Invalid request body")
 	}
-	validationErrors := utils.ValidateRequest(req)
-
-	if len(validationErrors) > 0 {
-		errorMessages := make([]string, len(validationErrors))
-		for i, validationErr := range validationErrors {
-			errorMessages[i] = validationErr.Error()
-		}
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"errors": errorMessages,
-		})
-
+	validationErrorsMap := utils.ValidateRequest(req)
+	if validationErrorsMap != nil {
+		return utils.JsonResponse(ctx, fiber.StatusBadRequest, fiber.Map{"errors": validationErrorsMap})
 	}
+
 	user := req.ToUser()
-	id, err := h.UserService.CreateUser(user)
+	userId, err := h.UserService.CreateUser(user) // Renamed id to userId for clarity
 	if err != nil {
-		return utils.HandleErrorResponse(ctx, fiber.StatusInternalServerError, err.Error())
+		// Consider specific errors from CreateUser, e.g., email already exists
+		return utils.HandleErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to create user") // Generic message
 	}
-	token, err := utils.CreateToken(id)
-	return utils.JsonResponse(ctx, fiber.StatusCreated, fiber.Map{
-		"token": token,
-	})
+	token, err := utils.CreateToken(userId)
+	if err != nil {
+		// This error wasn't handled before for CreateToken
+		return utils.HandleErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to create token")
+	}
+	return utils.JsonResponse(ctx, fiber.StatusCreated, fiber.Map{"token": token})
 }
 
 // Login godoc
@@ -205,35 +169,35 @@ func (h *UserHandler) CreateUser(ctx *fiber.Ctx) error {
 //	@Accept			json
 //	@Produce		json
 //	@Param			credentials	body		models.LoginUserRequest	true	"Login credentials"
-//	@Success		200			{object}	fiber.Map				"Authentication successful, token returned"
-//	@Failure		400			{object}	fiber.Map				"Invalid request body or validation errors"
-//	@Failure		500			{object}	fiber.Map				"Internal Server Error"
+//	@Success		200			{object}	fiber.Map				"Authentication successful, token returned (e.g., {\"token\": \"jwt_token_here\"})"
+//	@Failure		400			{object}	fiber.Map				"Invalid request body (e.g., {\"message\": \"Invalid request body\"}) or validation errors (e.g., {\"errors\": {\"field\": \"error message\"}})"
+//	@Failure		401			{object}	fiber.Map				"Unauthorized (e.g., {\"message\": \"Invalid username or password\"})"
+//	@Failure		500			{object}	fiber.Map				"Internal Server Error (e.g., {\"message\": \"Login failed\"} or {\"message\": \"Failed to create token\"})"
 //	@Router			/login [post]
 func (h *UserHandler) Login(ctx *fiber.Ctx) error {
 	var req *models.LoginUserRequest
 	if err := ctx.BodyParser(&req); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Invalid request body",
-		})
+		return utils.HandleErrorResponse(ctx, fiber.StatusBadRequest, "Invalid request body")
 	}
-	validationErrors := utils.ValidateRequest(req)
-	if len(validationErrors) > 0 {
-		errorMessages := make([]string, len(validationErrors))
-		for i, validationErr := range validationErrors {
-			errorMessages[i] = validationErr.Error()
-		}
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"errors": errorMessages,
-		})
+	validationErrorsMap := utils.ValidateRequest(req)
+	if validationErrorsMap != nil {
+		return utils.JsonResponse(ctx, fiber.StatusBadRequest, fiber.Map{"errors": validationErrorsMap})
 	}
-	id, err := h.UserService.LoginUser(req)
+
+	userId, err := h.UserService.LoginUser(req) // Renamed id to userId
 	if err != nil {
-		return utils.HandleErrorResponse(ctx, fiber.StatusInternalServerError, err.Error())
+		// Use custom error types for better error handling
+		if errors.Is(err, utils.ErrInvalidCredentials) {
+			return utils.HandleErrorResponse(ctx, fiber.StatusUnauthorized, "Invalid username or password")
+		}
+		return utils.HandleErrorResponse(ctx, fiber.StatusInternalServerError, "Login failed") // Generic message
 	}
-	token, err := utils.CreateToken(id)
-	return utils.JsonResponse(ctx, fiber.StatusOK, fiber.Map{
-		"token": token,
-	})
+	token, err := utils.CreateToken(userId)
+	if err != nil {
+		// This error wasn't handled before for CreateToken
+		return utils.HandleErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to create token")
+	}
+	return utils.JsonResponse(ctx, fiber.StatusOK, fiber.Map{"token": token})
 }
 
 // GetMe godoc
@@ -244,9 +208,9 @@ func (h *UserHandler) Login(ctx *fiber.Ctx) error {
 //	@Accept			json
 //	@Produce		json
 //	@Security		ApiKeyAuth
-//	@Success		200	{object}	fiber.Map	"Details of the authenticated user"
+//	@Success		200	{object}	fiber.Map	"Details of the authenticated user (e.g., {\"user\": {\"id\": 1, ...}})"
 //	@Router			/me [get]
 func (h *UserHandler) GetMe(c *fiber.Ctx) error {
 	user := c.Locals("user").(models.User)
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"data": fiber.Map{"user": user}})
+	return utils.JsonResponse(c, fiber.StatusOK, fiber.Map{"user": user})
 }

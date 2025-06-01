@@ -7,16 +7,42 @@ import (
 	"gorm.io/gorm"
 )
 
-type UserRepository struct {
+// UserRepository defines the interface for user persistence operations.
+type UserRepository interface {
+	// GetUsers retrieves all users from the database.
+	GetUsers() ([]models.User, error)
+	// GetUserById retrieves a single user by their ID.
+	// Returns the found user or an error (e.g., gorm.ErrRecordNotFound if not found).
+	GetUserById(id string) (models.User, error)
+	// DeleteUser removes a user by their ID.
+	// Returns an error if the operation fails or the user is not found.
+	DeleteUser(id string) error
+	// UpdateUser updates an existing user's details by their ID.
+	// Takes a models.UpdateUserRequest containing fields to update.
+	// Returns an error if the operation fails or the user is not found.
+	UpdateUser(id string, req *models.UpdateUserRequest) error
+	// CreateUser adds a new user to the database.
+	// The input user's password should be plain text; it will be hashed before saving.
+	// Returns the ID of the newly created user and an error if the operation fails.
+	CreateUser(req *models.User) (uint, error)
+	// LoginUser authenticates a user based on email and password.
+	// Returns the user's ID on successful authentication, or an error otherwise.
+	LoginUser(req *models.LoginUserRequest) (uint, error)
+}
+
+// userRepositoryImpl is the concrete implementation of UserRepository.
+type userRepositoryImpl struct {
 	DB *gorm.DB
 }
 
-func NewUserRepository(db *gorm.DB) *UserRepository {
-	return &UserRepository{
+// NewUserRepository creates a new instance of the concrete UserRepository implementation.
+func NewUserRepository(db *gorm.DB) UserRepository { // Returns interface
+	return &userRepositoryImpl{ // Ensure this returns a pointer if methods have pointer receivers
 		DB: db,
 	}
 }
-func (r *UserRepository) GetUsers() ([]models.User, error) {
+
+func (r *userRepositoryImpl) GetUsers() ([]models.User, error) {
 	var users []models.User
 	if err := r.DB.Find(&users).Error; err != nil {
 		return nil, err
@@ -24,15 +50,15 @@ func (r *UserRepository) GetUsers() ([]models.User, error) {
 	return users, nil
 }
 
-func (r *UserRepository) GetUserById(id string) (models.User, error) {
+func (r *userRepositoryImpl) GetUserById(id string) (models.User, error) { // Corrected receiver
 	var user models.User
 	if err := r.DB.First(&user, id).Error; err != nil {
-		return models.User{}, err
+		return models.User{}, err // Return zero-value User on error
 	}
 	return user, nil
 }
 
-func (r *UserRepository) DeleteUser(id string) error {
+func (r *userRepositoryImpl) DeleteUser(id string) error {
 	result := r.DB.Delete(&models.User{}, id)
 	if result.Error != nil {
 		return result.Error
@@ -43,8 +69,8 @@ func (r *UserRepository) DeleteUser(id string) error {
 	return nil
 }
 
-func (r *UserRepository) UpdateUser(id string, req *models.UpdateUserRequest) error {
-	result := r.DB.Model(&models.User{}).Where("id = ?", id).Updates(&req)
+func (r *userRepositoryImpl) UpdateUser(id string, req *models.UpdateUserRequest) error { // Corrected receiver
+	result := r.DB.Model(&models.User{}).Where("id = ?", id).Updates(req) // Pass req directly
 	if result.Error != nil {
 		return result.Error
 	}
@@ -54,7 +80,7 @@ func (r *UserRepository) UpdateUser(id string, req *models.UpdateUserRequest) er
 	return nil
 }
 
-func (r *UserRepository) CreateUser(req *models.User) (uint, error) {
+func (r *userRepositoryImpl) CreateUser(req *models.User) (uint, error) {
 	hashedPassword, err := utils.HashPassword(req.Password)
 	if err != nil {
 		return 0, err
@@ -67,15 +93,19 @@ func (r *UserRepository) CreateUser(req *models.User) (uint, error) {
 	return req.ID, nil
 }
 
-func (r *UserRepository) Login(LoginUserRequest *models.LoginUserRequest) (uint, error) {
-
+// LoginUser attempts to authenticate a user.
+// Renamed from Login to LoginUser for consistency with UserService interface.
+func (r *userRepositoryImpl) LoginUser(loginUserRequest *models.LoginUserRequest) (uint, error) { // Corrected receiver
 	var user models.User
-	result := r.DB.Where("email = ?", LoginUserRequest.Email).First(&user)
+	result := r.DB.Where("email = ?", loginUserRequest.Email).First(&user)
 	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return 0, utils.ErrInvalidCredentials // Don't leak whether email exists
+		}
 		return 0, result.Error
 	}
-	if err := utils.CheckPasswordHash(LoginUserRequest.Password, user.Password); err != nil {
-		return 0, err
+	if err := utils.CheckPasswordHash(loginUserRequest.Password, user.Password); err != nil {
+		return 0, utils.ErrInvalidCredentials // Password mismatch
 	}
 	return user.ID, nil
 }

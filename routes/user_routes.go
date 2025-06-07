@@ -22,5 +22,7 @@ func SetupUserRoutes(app fiber.Router, db *gorm.DB) {
 	app.Put("/:id", userHandler.UpdateUser)
 	app.Post("/", userHandler.CreateUser)
 	app.Post("/login", userHandler.Login)
-
+	// Routes requiring authentication
+	app.Post("/:id/follow", middlewares.DeserializeUser(db), userHandler.FollowUser)
+	app.Post("/:id/unfollow", middlewares.DeserializeUser(db), userHandler.UnfollowUser)
 }

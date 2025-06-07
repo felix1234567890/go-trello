@@ -22,6 +22,10 @@ type UserService interface {
 	// LoginUser handles user authentication.
 	// Returns the user's ID on successful login or an error.
 	LoginUser(req *models.LoginUserRequest) (uint, error)
+	// FollowUser handles the logic for a user to follow another user.
+	FollowUser(userID uint, targetUserID uint) error
+	// UnfollowUser handles the logic for a user to unfollow another user.
+	UnfollowUser(userID uint, targetUserID uint) error
 }
 
 // UserServiceImpl is the concrete implementation of the UserService interface.
@@ -56,5 +60,13 @@ func (s *UserServiceImpl) CreateUser(req *models.User) (uint, error) {
 
 func (s *UserServiceImpl) LoginUser(loginUserRequest *models.LoginUserRequest) (uint, error) {
 	// Ensure the method called matches the repository interface
-	return s.Repo.LoginUser(loginUserRequest) 
+	return s.Repo.LoginUser(loginUserRequest)
+}
+
+func (s *UserServiceImpl) FollowUser(userID uint, targetUserID uint) error {
+	return s.Repo.FollowUser(userID, targetUserID)
+}
+
+func (s *UserServiceImpl) UnfollowUser(userID uint, targetUserID uint) error {
+	return s.Repo.UnfollowUser(userID, targetUserID)
 }

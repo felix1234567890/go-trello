@@ -15,10 +15,18 @@ type MockUserRepository struct {
 	CreateUserFunc func(user *models.User) (uint, error) // Corrected signature
 	// Add other methods from UserRepository interface as needed for other tests
 	GetUsersFunc    func() ([]models.User, error)
-	GetUserByIdFunc func(id string) (models.User, error) 
+	GetUserByIdFunc func(id string) (models.User, error)
 	UpdateUserFunc  func(id string, user *models.UpdateUserRequest) error // Changed to return error
 	DeleteUserFunc  func(id string) error
 	LoginUserFunc   func(user *models.LoginUserRequest) (uint, error) // This field will be used by LoginUser method
+	FollowUserFunc  func(userID uint, targetUserID uint) error
+	UnfollowUserFunc func(userID uint, targetUserID uint) error
+
+	// Fields to store called arguments
+	FollowUserCalledWithUserID      uint
+	FollowUserCalledWithTargetUserID  uint
+	UnfollowUserCalledWithUserID    uint
+	UnfollowUserCalledWithTargetUserID uint
 }
 
 // Ensure MockUserRepository implements repository.UserRepository
@@ -76,6 +84,23 @@ func (m *MockUserRepository) LoginUser(user *models.LoginUserRequest) (uint, err
 	panic("LoginUserFunc not implemented for mock")
 }
 
+func (m *MockUserRepository) FollowUser(userID uint, targetUserID uint) error {
+	m.FollowUserCalledWithUserID = userID
+	m.FollowUserCalledWithTargetUserID = targetUserID
+	if m.FollowUserFunc != nil {
+		return m.FollowUserFunc(userID, targetUserID)
+	}
+	panic("FollowUserFunc not implemented for mock")
+}
+
+func (m *MockUserRepository) UnfollowUser(userID uint, targetUserID uint) error {
+	m.UnfollowUserCalledWithUserID = userID
+	m.UnfollowUserCalledWithTargetUserID = targetUserID
+	if m.UnfollowUserFunc != nil {
+		return m.UnfollowUserFunc(userID, targetUserID)
+	}
+	panic("UnfollowUserFunc not implemented for mock")
+}
 
 func TestUserServiceImpl_CreateUser(t *testing.T) {
 	validUserInput := &models.User{
@@ -148,6 +173,126 @@ func TestUserServiceImpl_CreateUser(t *testing.T) {
 			} else {
 				assert.NoError(t, err, "Expected no error but got one for test case: %s", tt.name)
 			}
+		})
+	}
+}
+
+func TestUserServiceImpl_FollowUser(t *testing.T) {
+	tests := []struct {
+		name                   string
+		userID                 uint
+		targetUserID           uint
+		setupMock              func(mockRepo *MockUserRepository)
+		expectedErr            error
+		expectCalledUserID     uint
+		expectCalledTargetUserID uint
+	}{
+		{
+			name:         "successful follow",
+			userID:       1,
+			targetUserID: 2,
+			setupMock: func(mockRepo *MockUserRepository) {
+				mockRepo.FollowUserFunc = func(uid uint, tuid uint) error {
+					return nil
+				}
+			},
+			expectedErr:            nil,
+			expectCalledUserID:     1,
+			expectCalledTargetUserID: 2,
+		},
+		{
+			name:         "repository returns error on follow",
+			userID:       1,
+			targetUserID: 2,
+			setupMock: func(mockRepo *MockUserRepository) {
+				mockRepo.FollowUserFunc = func(uid uint, tuid uint) error {
+					return errors.New("repo error on follow")
+				}
+			},
+			expectedErr:            errors.New("repo error on follow"),
+			expectCalledUserID:     1,
+			expectCalledTargetUserID: 2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := &MockUserRepository{}
+			if tt.setupMock != nil {
+				tt.setupMock(mockRepo)
+			}
+
+			userService := NewUserService(mockRepo)
+			err := userService.FollowUser(tt.userID, tt.targetUserID)
+
+			if tt.expectedErr != nil {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedErr.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, tt.expectCalledUserID, mockRepo.FollowUserCalledWithUserID)
+			assert.Equal(t, tt.expectCalledTargetUserID, mockRepo.FollowUserCalledWithTargetUserID)
+		})
+	}
+}
+
+func TestUserServiceImpl_UnfollowUser(t *testing.T) {
+	tests := []struct {
+		name                   string
+		userID                 uint
+		targetUserID           uint
+		setupMock              func(mockRepo *MockUserRepository)
+		expectedErr            error
+		expectCalledUserID     uint
+		expectCalledTargetUserID uint
+	}{
+		{
+			name:         "successful unfollow",
+			userID:       1,
+			targetUserID: 2,
+			setupMock: func(mockRepo *MockUserRepository) {
+				mockRepo.UnfollowUserFunc = func(uid uint, tuid uint) error {
+					return nil
+				}
+			},
+			expectedErr:            nil,
+			expectCalledUserID:     1,
+			expectCalledTargetUserID: 2,
+		},
+		{
+			name:         "repository returns error on unfollow",
+			userID:       1,
+			targetUserID: 2,
+			setupMock: func(mockRepo *MockUserRepository) {
+				mockRepo.UnfollowUserFunc = func(uid uint, tuid uint) error {
+					return errors.New("repo error on unfollow")
+				}
+			},
+			expectedErr:            errors.New("repo error on unfollow"),
+			expectCalledUserID:     1,
+			expectCalledTargetUserID: 2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := &MockUserRepository{}
+			if tt.setupMock != nil {
+				tt.setupMock(mockRepo)
+			}
+
+			userService := NewUserService(mockRepo)
+			err := userService.UnfollowUser(tt.userID, tt.targetUserID)
+
+			if tt.expectedErr != nil {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedErr.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, tt.expectCalledUserID, mockRepo.UnfollowUserCalledWithUserID)
+			assert.Equal(t, tt.expectCalledTargetUserID, mockRepo.UnfollowUserCalledWithTargetUserID)
 		})
 	}
 }

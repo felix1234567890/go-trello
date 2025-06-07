@@ -4,6 +4,7 @@ package handlers
 import (
 	"errors"
 	"felix1234567890/go-trello/models"
+	"strconv"
 	"felix1234567890/go-trello/service"
 	"felix1234567890/go-trello/utils"
 
@@ -213,4 +214,82 @@ func (h *UserHandler) Login(ctx *fiber.Ctx) error {
 func (h *UserHandler) GetMe(c *fiber.Ctx) error {
 	user := c.Locals("user").(models.User)
 	return utils.JsonResponse(c, fiber.StatusOK, fiber.Map{"user": user})
+}
+
+// FollowUser godoc
+//	@Summary		Follow a user
+//	@Description	Follow another user by their ID
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Security		ApiKeyAuth
+//	@Param			id	path		string		true	"Target User ID"
+//	@Success		200	{object}	fiber.Map	"Successfully followed user (e.g., {\"message\": \"Successfully followed user\"})"
+//	@Failure		400	{object}	fiber.Map	"Invalid target user ID or cannot follow yourself (e.g., {\"message\": \"Invalid target user ID\"} or {\"message\": \"Cannot follow yourself\"})"
+//	@Failure		401	{object}	fiber.Map	"Unauthorized (e.g., {\"message\": \"Unauthorized\"})"
+//	@Failure		404	{object}	fiber.Map	"User or target user not found (e.g., {\"message\": \"User or target user not found\"})"
+//	@Failure		500	{object}	fiber.Map	"Internal Server Error (e.g., {\"message\": \"Failed to follow user\"})"
+//	@Router			/users/{id}/follow [post]
+func (h *UserHandler) FollowUser(c *fiber.Ctx) error {
+	targetUserIDStr := c.Params("id")
+	targetUserID, err := strconv.ParseUint(targetUserIDStr, 10, 32)
+	if err != nil {
+		return utils.HandleErrorResponse(c, fiber.StatusBadRequest, "Invalid target user ID")
+	}
+
+	user := c.Locals("user").(models.User)
+	userID := user.ID
+
+	if userID == uint(targetUserID) {
+		return utils.HandleErrorResponse(c, fiber.StatusBadRequest, "Cannot follow yourself")
+	}
+
+	err = h.UserService.FollowUser(userID, uint(targetUserID))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return utils.HandleErrorResponse(c, fiber.StatusNotFound, "User or target user not found")
+		}
+		return utils.HandleErrorResponse(c, fiber.StatusInternalServerError, "Failed to follow user")
+	}
+
+	return utils.JsonResponse(c, fiber.StatusOK, fiber.Map{"message": "Successfully followed user"})
+}
+
+// UnfollowUser godoc
+//	@Summary		Unfollow a user
+//	@Description	Unfollow another user by their ID
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Security		ApiKeyAuth
+//	@Param			id	path		string		true	"Target User ID"
+//	@Success		200	{object}	fiber.Map	"Successfully unfollowed user (e.g., {\"message\": \"Successfully unfollowed user\"})"
+//	@Failure		400	{object}	fiber.Map	"Invalid target user ID or cannot unfollow yourself (e.g., {\"message\": \"Invalid target user ID\"} or {\"message\": \"Cannot unfollow yourself\"})"
+//	@Failure		401	{object}	fiber.Map	"Unauthorized (e.g., {\"message\": \"Unauthorized\"})"
+//	@Failure		404	{object}	fiber.Map	"User or target user not found, or not following (e.g., {\"message\": \"User or target user not found, or not following\"})"
+//	@Failure		500	{object}	fiber.Map	"Internal Server Error (e.g., {\"message\": \"Failed to unfollow user\"})"
+//	@Router			/users/{id}/unfollow [post]
+func (h *UserHandler) UnfollowUser(c *fiber.Ctx) error {
+	targetUserIDStr := c.Params("id")
+	targetUserID, err := strconv.ParseUint(targetUserIDStr, 10, 32)
+	if err != nil {
+		return utils.HandleErrorResponse(c, fiber.StatusBadRequest, "Invalid target user ID")
+	}
+
+	user := c.Locals("user").(models.User)
+	userID := user.ID
+
+	if userID == uint(targetUserID) {
+		return utils.HandleErrorResponse(c, fiber.StatusBadRequest, "Cannot unfollow yourself")
+	}
+
+	err = h.UserService.UnfollowUser(userID, uint(targetUserID))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return utils.HandleErrorResponse(c, fiber.StatusNotFound, "User or target user not found, or not following")
+		}
+		return utils.HandleErrorResponse(c, fiber.StatusInternalServerError, "Failed to unfollow user")
+	}
+
+	return utils.JsonResponse(c, fiber.StatusOK, fiber.Map{"message": "Successfully unfollowed user"})
 }

@@ -7,6 +7,8 @@ type User struct {
 	Username string `json:"username"`
 	Email    string `json:"email" gorm:"unique"`
 	Password string `json:"password"`
+	Followers []*User `gorm:"many2many:user_followers;joinForeignKey:UserID;joinReferences:FollowerID"`
+	Following []*User `gorm:"many2many:user_following;joinForeignKey:UserID;joinReferences:FollowingID"`
 }
 
 type CreateUserRequest struct {

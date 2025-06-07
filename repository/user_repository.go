@@ -125,11 +125,22 @@ func (r *userRepositoryImpl) FollowUser(userID uint, targetUserID uint) error {
 		return err
 	}
 
-	if err := r.DB.Model(&user).Association("Following").Append(&targetUser); err != nil {
+	tx := r.DB.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	if err := tx.Model(&user).Association("Following").Append(&targetUser); err != nil {
+		tx.Rollback()
 		return err
 	}
 
-	if err := r.DB.Model(&targetUser).Association("Followers").Append(&user); err != nil {
+	if err := tx.Model(&targetUser).Association("Followers").Append(&user); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
 		return err
 	}
 
@@ -147,11 +158,22 @@ func (r *userRepositoryImpl) UnfollowUser(userID uint, targetUserID uint) error 
 		return err
 	}
 
-	if err := r.DB.Model(&user).Association("Following").Delete(&targetUser); err != nil {
+	tx := r.DB.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	if err := tx.Model(&user).Association("Following").Delete(&targetUser); err != nil {
+		tx.Rollback()
 		return err
 	}
 
-	if err := r.DB.Model(&targetUser).Association("Followers").Delete(&user); err != nil {
+	if err := tx.Model(&targetUser).Association("Followers").Delete(&user); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
 		return err
 	}
 

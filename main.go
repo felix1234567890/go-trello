@@ -2,7 +2,10 @@ package main
 
 import (
 	"felix1234567890/go-trello/database"
+	"felix1234567890/go-trello/handlers"
+	"felix1234567890/go-trello/repository"
 	"felix1234567890/go-trello/routes"
+	"felix1234567890/go-trello/utils"
 	"flag"
 	"log"
 
@@ -32,6 +35,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error loading .env file: %s", err)
 	}
+	utils.InitSecretKey()
 	db, err := database.ConnectToDB()
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
@@ -45,5 +49,10 @@ func main() {
 	globalPrefix := app.Group("/api")
 	userRoutes := globalPrefix.Group("/users")
 	routes.SetupUserRoutes(userRoutes, db)
+
+	groupRepo := repository.NewGroupRepository(db)
+	groupHandler := handlers.NewGroupHandler(groupRepo)
+	routes.SetupGroupRoutes(globalPrefix, groupHandler)
+
 	log.Fatal(app.Listen(":" + *port))
 }

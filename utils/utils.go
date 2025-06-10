@@ -19,7 +19,7 @@ import (
 	"gorm.io/gorm"
 )
 
-var SECRET_KEY = []byte(os.Getenv("SECRET_KEY"))
+var SECRET_KEY []byte
 
 // Custom error types for better error handling
 var (
@@ -28,13 +28,12 @@ var (
 	ErrUserAlreadyExists = errors.New("user already exists")
 )
 
-// init checks for the presence of the SECRET_KEY environment variable at application startup.
-// It terminates the application with log.Fatalf if the SECRET_KEY is not set,
-// ensuring the application does not run with a critical security configuration missing.
-func init() {
+// InitSecretKey loads SECRET_KEY from environment after .env is loaded.
+func InitSecretKey() {
 	if os.Getenv("SECRET_KEY") == "" {
 		log.Fatalf("FATAL: SECRET_KEY environment variable is not set.")
 	}
+	SECRET_KEY = []byte(os.Getenv("SECRET_KEY"))
 }
 
 // FakeUserFactory creates a random number of fake users (between 5 and 10)

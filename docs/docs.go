@@ -23,6 +23,458 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/events": {
+            "get": {
+                "description": "Get a list of all events.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "events"
+                ],
+                "summary": "Get all events",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Event"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new event with the given details. Date can be YYYY-MM-DD or RFC3339.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "events"
+                ],
+                "summary": "Create a new event",
+                "parameters": [
+                    {
+                        "description": "Event details",
+                        "name": "event",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CreateEventRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.Event"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body, validation error, or invalid date format",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/groups/{group_id}": {
+            "post": {
+                "description": "Associate a group with an event.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "events"
+                ],
+                "summary": "Add a group to an event",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Group ID",
+                        "name": "group_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Group added to event successfully",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid event ID or group ID format",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "404": {
+                        "description": "Event or Group not found",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Disassociate a group from an event.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "events"
+                ],
+                "summary": "Remove a group from an event",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Group ID",
+                        "name": "group_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Group removed from event successfully",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid event ID or group ID format",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "404": {
+                        "description": "Event or Group not found, or group not in event",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/users/{user_id}": {
+            "post": {
+                "description": "Associate a user with an event.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "events"
+                ],
+                "summary": "Add a user to an event",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User added to event successfully",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid event ID or user ID format",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "404": {
+                        "description": "Event or User not found",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Disassociate a user from an event.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "events"
+                ],
+                "summary": "Remove a user from an event",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User removed from event successfully",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid event ID or user ID format",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "404": {
+                        "description": "Event or User not found, or user not in event",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{id}": {
+            "get": {
+                "description": "Get details of a specific event by its ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "events"
+                ],
+                "summary": "Get an event by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Event"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid event ID format",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "404": {
+                        "description": "Event not found",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update an existing event with the given details. Date can be YYYY-MM-DD or RFC3339.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "events"
+                ],
+                "summary": "Update an existing event",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Event details to update",
+                        "name": "event",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.UpdateEventRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Event"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body, validation error, or invalid date format",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "404": {
+                        "description": "Event not found",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a specific event by its ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "events"
+                ],
+                "summary": "Delete an event by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Event deleted successfully"
+                    },
+                    "400": {
+                        "description": "Invalid event ID format",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "404": {
+                        "description": "Event not found",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
         "/login": {
             "post": {
                 "description": "Authenticate a user and return a token",
@@ -49,19 +501,25 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Authentication successful, token returned",
+                        "description": "Authentication successful, token returned (e.g., {\\\"token\\\": \\\"jwt_token_here\\\"})",
                         "schema": {
                             "$ref": "#/definitions/fiber.Map"
                         }
                     },
                     "400": {
-                        "description": "Invalid request body or validation errors",
+                        "description": "Invalid request body (e.g., {\\\"message\\\": \\\"Invalid request body\\\"}) or validation errors (e.g., {\\\"errors\\\": {\\\"field\\\": \\\"error message\\\"}})",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized (e.g., {\\\"message\\\": \\\"Invalid username or password\\\"})",
                         "schema": {
                             "$ref": "#/definitions/fiber.Map"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal Server Error (e.g., {\\\"message\\\": \\\"Login failed\\\"} or {\\\"message\\\": \\\"Failed to create token\\\"})",
                         "schema": {
                             "$ref": "#/definitions/fiber.Map"
                         }
@@ -89,7 +547,7 @@ const docTemplate = `{
                 "summary": "Get current user",
                 "responses": {
                     "200": {
-                        "description": "Details of the authenticated user",
+                        "description": "Details of the authenticated user (e.g., {\\\"user\\\": {\\\"id\\\": 1, ...}})",
                         "schema": {
                             "$ref": "#/definitions/fiber.Map"
                         }
@@ -112,16 +570,13 @@ const docTemplate = `{
                 "summary": "Get all users",
                 "responses": {
                     "200": {
-                        "description": "List of users",
+                        "description": "List of users (e.g., {\\\"users\\\": [{\\\"id\\\": 1, ...}]})",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.User"
-                            }
+                            "$ref": "#/definitions/fiber.Map"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal Server Error (e.g., {\\\"message\\\": \\\"Failed to retrieve users\\\"})",
                         "schema": {
                             "$ref": "#/definitions/fiber.Map"
                         }
@@ -153,19 +608,19 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "User created successfully, token returned",
+                        "description": "User created successfully, token returned (e.g., {\\\"token\\\": \\\"jwt_token_here\\\"})",
                         "schema": {
                             "$ref": "#/definitions/fiber.Map"
                         }
                     },
                     "400": {
-                        "description": "Invalid request body or validation errors",
+                        "description": "Invalid request body (e.g., {\\\"message\\\": \\\"Invalid request body\\\"}) or validation errors (e.g., {\\\"errors\\\": {\\\"field\\\": \\\"error message\\\"}})",
                         "schema": {
                             "$ref": "#/definitions/fiber.Map"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal Server Error (e.g., {\\\"message\\\": \\\"Failed to create user\\\"} or {\\\"message\\\": \\\"Failed to create token\\\"})",
                         "schema": {
                             "$ref": "#/definitions/fiber.Map"
                         }
@@ -197,19 +652,19 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "User details",
+                        "description": "User details (e.g., {\\\"user\\\": {\\\"id\\\": 1, ...}})",
                         "schema": {
-                            "$ref": "#/definitions/models.User"
+                            "$ref": "#/definitions/fiber.Map"
                         }
                     },
                     "404": {
-                        "description": "User not found",
+                        "description": "User not found (e.g., {\\\"message\\\": \\\"User with id X not found\\\"})",
                         "schema": {
                             "$ref": "#/definitions/fiber.Map"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal Server Error (e.g., {\\\"message\\\": \\\"Failed to retrieve user\\\"})",
                         "schema": {
                             "$ref": "#/definitions/fiber.Map"
                         }
@@ -248,25 +703,25 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "User updated successfully",
+                        "description": "User updated successfully (e.g., {\\\"message\\\": \\\"User updated successfully\\\"})",
                         "schema": {
                             "$ref": "#/definitions/fiber.Map"
                         }
                     },
                     "400": {
-                        "description": "Invalid request body or validation errors",
+                        "description": "Invalid request body (e.g., {\\\"message\\\": \\\"Invalid request body\\\"}) or validation errors (e.g., {\\\"errors\\\": {\\\"field\\\": \\\"error message\\\"}})",
                         "schema": {
                             "$ref": "#/definitions/fiber.Map"
                         }
                     },
                     "404": {
-                        "description": "User not found",
+                        "description": "User not found (e.g., {\\\"message\\\": \\\"User with id X not found for update\\\"})",
                         "schema": {
                             "$ref": "#/definitions/fiber.Map"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal Server Error (e.g., {\\\"message\\\": \\\"Failed to update user\\\"})",
                         "schema": {
                             "$ref": "#/definitions/fiber.Map"
                         }
@@ -296,19 +751,19 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "User deleted successfully",
+                        "description": "User deleted successfully (e.g., {\\\"message\\\": \\\"User deleted successfully\\\"})",
                         "schema": {
                             "$ref": "#/definitions/fiber.Map"
                         }
                     },
                     "404": {
-                        "description": "User not found",
+                        "description": "User not found (e.g., {\\\"message\\\": \\\"User with id X not found\\\"})",
                         "schema": {
                             "$ref": "#/definitions/fiber.Map"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal Server Error (e.g., {\\\"message\\\": \\\"Failed to delete user\\\"})",
                         "schema": {
                             "$ref": "#/definitions/fiber.Map"
                         }
@@ -334,6 +789,27 @@ const docTemplate = `{
                 }
             }
         },
+        "models.CreateEventRequest": {
+            "type": "object",
+            "required": [
+                "date",
+                "name"
+            ],
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "models.CreateUserRequest": {
             "type": "object",
             "required": [
@@ -355,6 +831,73 @@ const docTemplate = `{
                 }
             }
         },
+        "models.Event": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "deletedAt": {
+                    "$ref": "#/definitions/gorm.DeletedAt"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "groups": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Group"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.User"
+                    }
+                }
+            }
+        },
+        "models.Group": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "deletedAt": {
+                    "$ref": "#/definitions/gorm.DeletedAt"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.User"
+                    }
+                }
+            }
+        },
         "models.LoginUserRequest": {
             "type": "object",
             "required": [
@@ -368,6 +911,24 @@ const docTemplate = `{
                 "password": {
                     "type": "string",
                     "minLength": 6
+                }
+            }
+        },
+        "models.UpdateEventRequest": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "minLength": 1
                 }
             }
         },

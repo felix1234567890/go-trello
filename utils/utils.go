@@ -24,8 +24,8 @@ var SECRET_KEY []byte
 // Custom error types for better error handling
 var (
 	ErrInvalidCredentials = errors.New("invalid credentials")
-	ErrUserNotFound      = errors.New("user not found")
-	ErrUserAlreadyExists = errors.New("user already exists")
+	ErrUserNotFound       = errors.New("user not found")
+	ErrUserAlreadyExists  = errors.New("user already exists")
 )
 
 // InitSecretKey loads SECRET_KEY from environment after .env is loaded.
@@ -92,7 +92,7 @@ func HandleErrorResponse(c *fiber.Ctx, status int, message string) error {
 }
 
 // JsonResponse sends a standardized JSON success response with a given status code and data.
-func JsonResponse(c *fiber.Ctx, status int, data interface{}) error {
+func JsonResponse(c *fiber.Ctx, status int, data any) error {
 	return c.Status(status).JSON(data)
 }
 

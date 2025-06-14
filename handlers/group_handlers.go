@@ -103,3 +103,5 @@ func (h *GroupHandler) RemoveUserFromGroup(c *fiber.Ctx) error {
 	}
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "user removed from group"})
 }
+
+

@@ -9,7 +9,7 @@ require (
 	github.com/go-faker/faker/v4 v4.2.0
 	github.com/gofiber/swagger v1.1.0
 	github.com/golang-jwt/jwt/v5 v5.2.0
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	github.com/swaggo/swag v1.16.3
 	golang.org/x/crypto v0.25.0
 	gorm.io/driver/sqlite v1.6.0
@@ -31,6 +31,7 @@ require (
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-sqlite3 v1.14.22 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/swaggo/files/v2 v2.0.1 // indirect
 	golang.org/x/text v0.20.0 // indirect
 	golang.org/x/tools v0.23.0 // indirect

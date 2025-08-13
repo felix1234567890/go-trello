@@ -270,4 +270,72 @@ paths:
       summary: Update a user
       tags:
       - users
+  /users/{id}/follow:
+    post:
+      tags:
+      - users
+      summary: "Follow a user"
+      description: "Allows the authenticated user to follow another user specified by ID."
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: "ID of the user to follow"
+        schema:
+          type: integer
+      responses:
+        "200":
+          description: "Successfully followed user"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Successfully followed user"
+        "400":
+          description: "Bad Request (e.g., trying to follow self)"
+        "401":
+          description: "Unauthorized (invalid or missing token)"
+        "404":
+          description: "Not Found (user or target user not found)"
+        "500":
+          description: "Internal Server Error"
+  /users/{id}/unfollow:
+    post:
+      tags:
+      - users
+      summary: "Unfollow a user"
+      description: "Allows the authenticated user to unfollow another user specified by ID."
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: "ID of the user to unfollow"
+        schema:
+          type: integer
+      responses:
+        "200":
+          description: "Successfully unfollowed user"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Successfully unfollowed user"
+        "400":
+          description: "Bad Request (e.g., trying to unfollow self)"
+        "401":
+          description: "Unauthorized (invalid or missing token)"
+        "404":
+          description: "Not Found (user or target user not found, or not following)"
+        "500":
+          description: "Internal Server Error"
 swagger: "2.0"

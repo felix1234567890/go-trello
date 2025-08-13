@@ -28,6 +28,10 @@ type UserRepository interface {
 	// LoginUser authenticates a user based on email and password.
 	// Returns the user's ID on successful authentication, or an error otherwise.
 	LoginUser(req *models.LoginUserRequest) (uint, error)
+	// FollowUser creates a follow relationship between two users.
+	FollowUser(userID uint, targetUserID uint) error
+	// UnfollowUser removes a follow relationship between two users.
+	UnfollowUser(userID uint, targetUserID uint) error
 }
 
 // userRepositoryImpl is the concrete implementation of UserRepository.
@@ -108,4 +112,70 @@ func (r *userRepositoryImpl) LoginUser(loginUserRequest *models.LoginUserRequest
 		return 0, utils.ErrInvalidCredentials // Password mismatch
 	}
 	return user.ID, nil
+}
+
+func (r *userRepositoryImpl) FollowUser(userID uint, targetUserID uint) error {
+	var user models.User
+	if err := r.DB.First(&user, userID).Error; err != nil {
+		return err
+	}
+
+	var targetUser models.User
+	if err := r.DB.First(&targetUser, targetUserID).Error; err != nil {
+		return err
+	}
+
+	tx := r.DB.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	if err := tx.Model(&user).Association("Following").Append(&targetUser); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Model(&targetUser).Association("Followers").Append(&user); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *userRepositoryImpl) UnfollowUser(userID uint, targetUserID uint) error {
+	var user models.User
+	if err := r.DB.First(&user, userID).Error; err != nil {
+		return err
+	}
+
+	var targetUser models.User
+	if err := r.DB.First(&targetUser, targetUserID).Error; err != nil {
+		return err
+	}
+
+	tx := r.DB.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	if err := tx.Model(&user).Association("Following").Delete(&targetUser); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Model(&targetUser).Association("Followers").Delete(&user); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+
+	return nil
 }

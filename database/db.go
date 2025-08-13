@@ -29,7 +29,7 @@ func ConnectToDB() (*gorm.DB, error) {
 		return nil, fmt.Errorf("cannot connect to database: %w", err)
 	}
 
-	err = db.AutoMigrate(&models.User{}, &models.Group{})
+	err = db.AutoMigrate(&models.User{}, &models.Group{}, &models.Event{})
 	if err != nil {
 		return nil, fmt.Errorf("cannot migrate: %w", err)
 	}

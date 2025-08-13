@@ -54,5 +54,8 @@ func main() {
 	groupHandler := handlers.NewGroupHandler(groupRepo)
 	routes.SetupGroupRoutes(globalPrefix, groupHandler)
 
+	// Setup Event Routes
+	routes.SetupEventRoutes(globalPrefix, db)
+
 	log.Fatal(app.Listen(":" + *port))
 }
